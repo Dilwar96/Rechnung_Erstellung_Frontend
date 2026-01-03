@@ -25,6 +25,9 @@ Environment
 VITE_API_URL=http://localhost:5000
 ```
 
+Deployment / Demo
+- Production demo: https://rechnungersteller.netlify.app/
+
 Project structure (important)
 - `src/App.tsx` — central application state and view selection
 - `src/views/` — top-level views (InvoicePage, InvoicesPage, SettingsPage)

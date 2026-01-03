@@ -33,7 +33,6 @@ function App() {
 
   const { handlePrint, handleSave } = useInvoiceActions(saveInvoice);
 
-  const totals = calculateTotals();
 
   // Event listener to clear admin token when page is closed or refreshed
   useEffect(() => {
