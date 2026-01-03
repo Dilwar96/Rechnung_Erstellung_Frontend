@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useInvoice } from './hooks/useInvoice';
 import { useInvoiceActions } from './hooks/useInvoiceActions';
-import { InvoiceHeader } from './components/InvoiceHeader';
-import { InvoiceItems } from './components/InvoiceItems';
-import { InvoiceFooter } from './components/InvoiceFooter';
-import { PrintLayout } from './components/PrintLayout';
-import { CompanySettings } from './components/CompanySettings';
 import { ToastContainer } from './components/Toast';
 import { AdminLogin } from './components/AdminLogin';
 import { AdminChangeCredentials } from './components/AdminChangeCredentials';
-import { InvoiceList } from './components/InvoiceList';
+
+import AppHeader from './components/AppHeader';
+import AppFooter from './components/AppFooter';
+import InvoicePage from './views/InvoicePage';
+import InvoicesPage from './views/InvoicesPage';
+import SettingsPage from './views/SettingsPage';
 
 function App() {
   const [currentView, setCurrentView] = useState<'invoice' | 'settings' | 'invoices'>('invoice');
@@ -131,144 +131,52 @@ function App() {
 
   // Show Company Settings view
   if (currentView === 'settings') {
-    return (
-      <>
-        <CompanySettings 
-          onBack={() => setCurrentView('invoice')} 
-        />
-        <ToastContainer />
-      </>
-    );
+    return <SettingsPage onBack={() => setCurrentView('invoice')} />;
   }
 
   // Show Invoice List view
   if (currentView === 'invoices') {
-    return (
-      <>
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-          <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <InvoiceList />
-            <div className="mt-8 flex justify-center">
-              <button
-                onClick={() => {
-                  setInvoice(prev => ({
-                    ...prev,
-                    invoiceNumber: '', // Rechnungsnummer leeren
-                  }));
-                  setCurrentView('invoice');
-                }}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-              >
-                Zurück zur Rechnungserstellung
-              </button>
-            </div>
-          </div>
-        </div>
-        <ToastContainer />
-      </>
-    );
+    return <InvoicesPage onBack={() => {
+      setInvoice(prev => ({ ...prev, invoiceNumber: '' }));
+      setCurrentView('invoice');
+    }} />;
   }
 
   // Show Invoice view (Hauptanwendung)
   return (
     <>
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        {/* Header bleibt minimal */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-4">
-                <span className="font-bold text-lg">Rechnungserstellung</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AppHeader />
 
-        {/* Main Content */}
         <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="invoice-content">
-            {/* Invoice Header */}
-            <InvoiceHeader
-              invoice={invoice}
-              updateCustomerInfo={updateCustomerInfo}
-              updateInvoiceNumber={updateInvoiceNumber}
-              updateDate={updateDate}
-              updateDeliveryDate={updateDeliveryDate}
-            />
-
-            {/* Invoice Items */}
-            <InvoiceItems
-              items={invoice.items}
-              onAddItem={addItem}
-              onUpdateItem={updateItem}
-              onRemoveItem={removeItem}
-            />
-
-            {/* Invoice Footer */}
-            <InvoiceFooter
-              totals={totals}
-              invoice={invoice}
-              onPaymentMethodChange={updatePaymentMethod}
-              onGlobalDiscountChange={updateGlobalDiscount}
-              onGlobalTipChange={updateGlobalTip}
-            />
-          </div>
-
-          {/* Print Layout (Hidden) */}
-          <div className="print-layout" style={{ display: 'none' }}>
-            <PrintLayout
-              invoice={invoice}
-              totals={totals}
-            />
-          </div>
+          <InvoicePage
+            invoice={invoice}
+            updateCustomerInfo={updateCustomerInfo}
+            updateInvoiceNumber={updateInvoiceNumber}
+            updateDate={updateDate}
+            updateDeliveryDate={updateDeliveryDate}
+            addItem={addItem}
+            updateItem={updateItem}
+            removeItem={removeItem}
+            calculateTotals={calculateTotals}
+            saveInvoice={saveInvoice}
+            loading={loading}
+            updatePaymentMethod={updatePaymentMethod}
+            updateGlobalDiscount={updateGlobalDiscount}
+            updateGlobalTip={updateGlobalTip}
+          />
         </div>
-        {/* Footer mit allen Buttons (ohne E-Mail) */}
-        <footer className="w-full bg-white border-t py-4 flex flex-wrap justify-center space-x-4 fixed bottom-0 left-0 z-40">
-          <button
-            onClick={() => setCurrentView('settings')}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>Einstellungen</span>
-          </button>
-          <button
-            onClick={() => setCurrentView('invoices')}
-            className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Rechnungen
-          </button>
-          {adminToken && (
-            <button
-              onClick={() => setShowChangeCredentials(v => !v)}
-              className="flex items-center space-x-2 bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
-            >
-              Passwort ändern
-            </button>
-          )}
-          <button
-            onClick={handlePrint}
-            className="flex items-center space-x-2 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Drucken
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Speichern
-          </button>
-          {adminToken && (
-            <button
-              onClick={handleAdminLogout}
-              className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Logout
-            </button>
-          )}
-        </footer>
+
+        <AppFooter
+          onSettings={() => setCurrentView('settings')}
+          onInvoices={() => setCurrentView('invoices')}
+          onPrint={handlePrint}
+          onSave={handleSave}
+          onLogout={handleAdminLogout}
+          onToggleChangeCredentials={() => setShowChangeCredentials(v => !v)}
+          adminToken={adminToken}
+        />
+
         {/* AdminChangeCredentials Modal */}
         {showChangeCredentials && (
           <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
