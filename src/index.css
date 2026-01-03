@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media print {
+  @page {
+    margin: 8mm;
+    size: A4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Show print layout and hide regular content */
+  .print-layout {
+    display: block !important;
+    page-break-inside: avoid;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+  
+  .invoice-content {
+    display: none !important;
+  }
+  
+  .invoice-actions,
+  .language-toggle {
+    display: none !important;
+  }
+  
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+  
+  .print\:p-6 {
+    padding: 1rem !important;
+  }
+  
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+  
+  .print\:rounded-none {
+    border-radius: 0 !important;
+  }
+  
+  /* Optimize for A4 printing */
+  .invoice-content {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  /* Ensure colors print correctly */
+  .bg-blue-50, .bg-gray-50, .bg-green-50 {
+    background-color: #f8fafc !important;
+  }
+  
+  .bg-blue-100 {
+    background-color: #dbeafe !important;
+  }
+  
+  .bg-blue-600 {
+    background-color: #2563eb !important;
+  }
+  
+  .text-white {
+    color: white !important;
+  }
+  
+  .text-blue-700 {
+    color: #1d4ed8 !important;
+  }
+  
+  .text-blue-900 {
+    color: #1e3a8a !important;
+  }
+  
+  .border-blue-300 {
+    border-color: #93c5fd !important;
+  }
+  
+  /* Adjust font sizes for print */
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+  
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+  
+  .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  .text-sm {
+    font-size: 0.875rem !important;
+  }
+  
+  .text-xs {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Compact spacing for A4 */
+  .space-y-8 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  .space-y-4 > * + * {
+    margin-top: 0.5rem !important;
+  }
+  
+  .space-y-2 > * + * {
+    margin-top: 0.25rem !important;
+  }
+  
+  .space-y-1 > * + * {
+    margin-top: 0.125rem !important;
+  }
+  
+  /* Reduce padding for compact layout */
+  .p-8 {
+    padding: 1rem !important;
+  }
+  
+  .p-6 {
+    padding: 0.75rem !important;
+  }
+  
+  .p-4 {
+    padding: 0.5rem !important;
+  }
+  
+  .p-3 {
+    padding: 0.5rem !important;
+  }
+  
+  /* Reduce margins for compact layout */
+  .mb-8 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .mb-4 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .mb-2 {
+    margin-bottom: 0.25rem !important;
+  }
+}
+
+/* Custom scrollbar for table */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth transitions */
+input, select, textarea {
+  transition: all 0.2s ease-in-out;
+}
+
+input:focus, select:focus, textarea:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Button hover effects */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Card hover effects */
+.bg-white {
+  transition: all 0.2s ease-in-out;
+}
+
+.bg-white:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
