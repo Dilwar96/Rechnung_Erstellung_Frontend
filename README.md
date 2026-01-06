@@ -1,103 +1,86 @@
-# Frontend — Developer README
+# Frontend — Rechnungserstellung
 
-Overview
-- This is the React + Vite TypeScript frontend for the invoice application. It provides an editor, preview and client-side PDF export for invoices and communicates with the backend API.
+## Übersicht
 
-Quick start
-- Install dependencies and run dev server:
+Dies ist das React + Vite TypeScript Frontend für die Rechnungsanwendung. Es bietet einen Editor, Vorschau und clientseitigen PDF-Export für Rechnungen und kommuniziert mit der Backend-API.
+
+## Schnellstart
+
+### Abhängigkeiten installieren und Entwicklungsserver starten:
 
 ```bash
 npm install
 npm run dev
 ```
 
-- Build for production:
+### Für Produktion bauen:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-Environment
-- Configure backend URL in `.env`:
+## Umgebung
+
+Konfiguriere die Backend-URL in `.env`:
 
 ```
 VITE_API_URL=http://localhost:5000
 ```
 
-Deployment / Demo
-- Production demo: https://rechnungersteller.netlify.app/
+## Demo-Zugang
 
-Demo-Zugang
-- Für lokale Tests / Demo gibt es standardmäßig einen Admin‑Account:
-  - **username:** admin
-  - **password:** admin123
+Für lokale Tests und Demo ist standardmäßig ein Admin-Account vorhanden:
+- **Benutzername:** admin
+- **Passwort:** admin123
 
-- Bitte nur lokal verwenden und in Produktionsumgebungen ändern.
+⚠️ Bitte nur lokal verwenden und in Produktionsumgebungen ändern!
 
-Project structure (important)
-- `src/App.tsx` — central application state and view selection
-- `src/views/` — top-level views (InvoicePage, InvoicesPage, SettingsPage)
-- `src/components/` — reusable UI components (AppHeader, AppFooter, PrintLayout, Invoice* components)
-- `src/hooks/` — business logic hooks (`useInvoice`, `useInvoiceActions`)
-- `src/services/api.ts` — API wrapper for backend calls
-.
+## Production-Demo
 
-PDF
-- PDF export runs client-side using `html2pdf.js` / `html2canvas`.
+Produktions-Demo: https://rechnungersteller.netlify.app/
 
+## Projektstruktur (wichtig)
 
-Troubleshooting
-- If `npm run dev` fails:
-  1. Run `npm install`.
-  2. Verify newly added files are present and imports are correct.
-  3. Check the browser console for runtime errors and the terminal for build errors.
+- `src/App.tsx` — zentrale Anwendungszustand und View-Auswahl
+- `src/views/` — Top-Level Views (InvoicePage, InvoicesPage, SettingsPage)
+- `src/components/` — wiederverwendbare UI-Komponenten (AppHeader, AppFooter, PrintLayout, Invoice* Komponenten)
+- `src/hooks/` — Business-Logic Hooks (`useInvoice`, `useInvoiceActions`)
+- `src/services/api.ts` — API-Wrapper für Backend-Aufrufe
 
-Contributing
-- Keep hooks in `src/hooks`, views in `src/views`, and pure presentational components in `src/components`.
-# Frontend — Ausschreibung
+### Wichtige Dateien
 
-Projekt: React + Vite UI für Rechnungserstellung
-
-Zweck
-- Ein reaktionsschnelles Web‑Interface zur Erstellung, Vorschau, PDF‑Export und Verwaltung von Rechnungen.
-- Verbindung zur Backend‑API (siehe `server/README.md`).
-
-Kurze Projektübersicht
-- `App.tsx` hält den zentralen State und verteilt Props an Views/Components.
-- Wichtige neue Views/Components:
-  - `src/components/AppHeader.tsx` — globaler Header
-  - `src/components/AppFooter.tsx` — Footer mit Aktions-Buttons
-  - `src/views/InvoicePage.tsx` — Hauptseite zur Rechnungserstellung
-  - `src/views/InvoicesPage.tsx` — Liste aller Rechnungen
-  - `src/views/SettingsPage.tsx` — Firmen-/Einstellungen
-
-Wichtige Dateien
 - App-Entry: `src/App.tsx`
 - Views: `src/views/*`
-- Components: `src/components/*`
+- Komponenten: `src/components/*`
 - Hooks / Business-Logic: `src/hooks/useInvoice.ts`, `src/hooks/useInvoiceActions.ts`
 - API-Service: `src/services/api.ts`
-- Toaster: `src/services/toast.ts`
-- Print/Export: `src/components/PrintLayout.tsx`
+- Toast-Benachrichtigungen: `src/services/toast.ts`
+- Druck/Export: `src/components/PrintLayout.tsx`
 
-Technologie-Stack
+## Technologie-Stack
+
 - React 18, TypeScript, Vite, TailwindCSS
 - html2pdf.js / html2canvas für clientseitigen PDF-Export
-- react-hot-toast für UX‑Feedback
+- react-hot-toast für Benutzer-Feedback
 
-Aufgaben / Anforderungen
-- UX & Validierung: Formulare clientseitig validieren, hilfreiche Fehlermeldungen/Toasts anzeigen.
-- Konsistenter State: Business‑Logik in Hooks (`useInvoice`).
-- PDF & Print: Hochwertige A4‑PDFs erzeugen (PrintLayout). Der PDF‑Export läuft clientseitig; der Server sendet keine E‑Mails mehr.
-- Integration: Kommunikation mit Backend via `src/services/api.ts` (`VITE_API_URL`).
-- Responsiveness & Accessibility: Mobil‑ und Druckansicht optimieren.
+## PDF-Export
 
-Run & Build
-- Install: `npm install`
-- Dev: `npm run dev`
-- Build: `npm run build`
-- Preview: `npm run preview`
+Der PDF-Export läuft clientseitig mit `html2pdf.js` / `html2canvas`. Der Server sendet keine E-Mails.
+
+## Fehlerbehebung
+
+Falls `npm run dev` fehlschlägt:
+
+1. Führe `npm install` aus.
+2. Überprüfe, dass neu hinzugefügte Dateien vorhanden sind und Importe korrekt sind.
+3. Überprüfe die Browser-Konsole auf Laufzeitfehler und das Terminal auf Build-Fehler.
+
+## Beiträge & Best Practices
+
+- Halte Hooks in `src/hooks`, Views in `src/views` und reine präsentationale Komponenten in `src/components`.
+- Validiere Formulare clientseitig und zeige hilfreiche Fehlermeldungen/Toasts an.
+- Nutze Business-Logik in Hooks für konsistenten State Management.
 - Lint: `npm run lint` (falls konfiguriert)
 - Env: setze `VITE_API_URL` in `.env`
 
