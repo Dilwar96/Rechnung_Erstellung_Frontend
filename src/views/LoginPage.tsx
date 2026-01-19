@@ -6,7 +6,7 @@ import { ToastContainer } from '../components/Toast';
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleLoginSuccess = (token: string, username: string) => {
+  const handleLoginSuccess = (token: string, _username: string) => {
     localStorage.setItem('adminToken', token);
     // Trigger custom event for same-tab localStorage update
     window.dispatchEvent(new Event('localStorageChange'));
