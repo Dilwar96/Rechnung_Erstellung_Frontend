@@ -111,9 +111,9 @@ function App() {
 
   // Main Layout Component for Protected Routes
   const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex flex-col">
       <AppHeader />
-      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
         {children}
       </div>
       <AppFooter
@@ -127,7 +127,7 @@ function App() {
       />
       
       {/* AdminChangeCredentials Modal */}
-      {showChangeCredentials && (
+      {showChangeCredentials && adminToken && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded shadow-lg p-6 relative">
             <button
