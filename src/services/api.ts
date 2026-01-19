@@ -7,6 +7,19 @@ export interface ApiResponse<T> {
 }
 
 class ApiService {
+  private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('adminToken');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -14,7 +27,7 @@ class ApiService {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: {
-          'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
           ...options.headers,
         },
         ...options,
@@ -23,6 +36,13 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle 401 Unauthorized - token expired or invalid
+        if (response.status === 401) {
+          localStorage.removeItem('adminToken');
+          window.location.href = '/'; // Redirect to login
+          return { error: 'Sitzung abgelaufen. Bitte erneut anmelden.' };
+        }
+        
         // For 409 status (duplicate invoice number), return the specific error message
         if (response.status === 409) {
           return { error: data.message || 'Eine Rechnung mit dieser Rechnungsnummer existiert bereits.' };
@@ -77,14 +97,6 @@ class ApiService {
       method: 'DELETE',
     });
   }
-
-  // Health check
-  async healthCheck() {
-    return this.request('/health');
-  }
-
-  // NOTE: E-Mail/PDF-Versand wurde entfernt. Falls später nötig, implementiere
-  // eine dedizierte Endpoint-Integration und entferne diesen Hinweis.
 }
 
 export const apiService = new ApiService(); 

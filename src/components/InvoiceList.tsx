@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { PrintLayout } from './PrintLayout';
 import { showToast } from '../services/toast';
+import { apiService } from '../services/api';
 
 interface Invoice {
   _id: string;
@@ -52,17 +53,22 @@ export const InvoiceList: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const pageSize = 10;
 
-  const fetchInvoices = () => {
+  const fetchInvoices = async () => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/api/invoices`)
-      .then(res => res.json())
-      .then(data => {
-        setInvoices(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+    try {
+      const response = await apiService.getInvoices();
+      if (response.error) {
+        showToast.error(response.error);
+        setInvoices([]);
+      } else if (response.data) {
+        setInvoices(response.data as Invoice[]);
+      }
+    } catch (error) {
+      showToast.error('Fehler beim Laden der Rechnungen');
+      setInvoices([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -72,12 +78,12 @@ export const InvoiceList: React.FC = () => {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, { method: 'DELETE' });
-      if (res.ok) {
+      const res = await apiService.deleteInvoice(id);
+      if (res.error) {
+        showToast.error(res.error);
+      } else {
         setInvoices(invoices => invoices.filter(inv => inv._id !== id));
         showToast.success('Rechnung wurde gelöscht.');
-      } else {
-        showToast.error('Fehler beim Löschen der Rechnung');
       }
     } catch {
       showToast.error('Fehler beim Löschen der Rechnung');
