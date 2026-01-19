@@ -38,8 +38,16 @@ class ApiService {
       if (!response.ok) {
         // Handle 401 Unauthorized - token expired or invalid
         if (response.status === 401) {
+          // Only redirect if there was actually a token (user was logged in)
+          const hadToken = localStorage.getItem('adminToken');
           localStorage.removeItem('adminToken');
-          window.location.href = '/'; // Redirect to login
+          
+          if (hadToken) {
+            // Avoid redirect loop by checking current path
+            if (window.location.pathname !== '/') {
+              window.location.href = '/';
+            }
+          }
           return { error: 'Sitzung abgelaufen. Bitte erneut anmelden.' };
         }
         
