@@ -45,23 +45,29 @@ export const useInvoice = () => {
   // Load company information from MongoDB
   useEffect(() => {
     const loadCompanyData = async () => {
+      // Only load if user is authenticated
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const response = await apiService.getCompany();
         
         if (response.error) {
           setError(response.error);
-          showToast.error('companyDataLoadError');
         } else if (response.data) {
           setInvoice(prev => ({
             ...prev,
             company: response.data as CompanyInfo
           }));
-          showToast.success('companyDataLoaded');
+          // Don't show toast on initial load success
         }
       } catch (error) {
         setError('Failed to load company data');
-        showToast.error('companyDataLoadError');
+        // Don't show toast on initial load failure
       } finally {
         setLoading(false);
       }

@@ -28,7 +28,13 @@ export const CompanySettings: React.FC<CompanySettingsProps> = ({ onBack }) => {
   });
 
   useEffect(() => {
-    loadCompanyData();
+    // Only load company data if user is authenticated
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      loadCompanyData();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const loadCompanyData = async () => {
@@ -41,7 +47,7 @@ export const CompanySettings: React.FC<CompanySettingsProps> = ({ onBack }) => {
         showToast.error('companyDataLoadError');
       } else if (response.data) {
         setCompany(response.data as CompanyInfo);
-        showToast.success('companyDataLoaded');
+        // Don't show success toast on initial load
       }
     } catch (error) {
       console.error('Error loading company data:', error);

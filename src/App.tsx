@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useInvoice } from './hooks/useInvoice';
 import { useInvoiceActions } from './hooks/useInvoiceActions';
 import { ToastContainer } from './components/Toast';
-import { AdminLogin } from './components/AdminLogin';
 import { AdminChangeCredentials } from './components/AdminChangeCredentials';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 import AppHeader from './components/AppHeader';
 import AppFooter from './components/AppFooter';
 import InvoicePage from './views/InvoicePage';
 import InvoicesPage from './views/InvoicesPage';
 import SettingsPage from './views/SettingsPage';
+import LoginPage from './views/LoginPage';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'invoice' | 'settings' | 'invoices'>('invoice');
+  const navigate = useNavigate();
   const [adminToken, setAdminToken] = useState<string | null>(localStorage.getItem('adminToken'));
-  const [adminUsername, setAdminUsername] = useState<string | null>(null);
   const [showChangeCredentials, setShowChangeCredentials] = useState(false);
   
   const {
@@ -55,6 +56,23 @@ function App() {
     };
   }, []);
 
+  // Update token state when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('adminToken');
+      setAdminToken(token);
+    };
+    
+    // Listen for custom storage event (for same tab)
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('localStorageChange', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('localStorageChange', handleStorageChange);
+    };
+  }, []);
+
   const updateInvoiceNumber = (value: string) => {
     setInvoice(prev => ({
       ...prev,
@@ -83,39 +101,47 @@ function App() {
     }));
   };
 
-  const handleAdminLogin = (token: string, username: string) => {
-    setAdminToken(token);
-    setAdminUsername(username);
-    // Nach Login: Felder zurücksetzen (außer company)
-    setInvoice(prev => ({
-      invoiceNumber: '',
-      date: new Date().toISOString().split('T')[0],
-      company: prev.company, // Firma bleibt gleich
-      customer: {
-        name: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        customField1: '',
-        customField2: ''
-      },
-      items: [],
-      paymentMethod: 'card',
-      currency: 'EUR',
-      globalDiscount: 0,
-      globalTip: 0
-    }));
-  };
-
   const handleAdminLogout = () => {
     localStorage.removeItem('adminToken');
     setAdminToken(null);
-    setAdminUsername(null);
+    // Trigger custom event for same-tab localStorage update
+    window.dispatchEvent(new Event('localStorageChange'));
+    navigate('/login');
   };
 
-  if (!adminToken) {
-    return <AdminLogin onLoginSuccess={handleAdminLogin} />;
-  }
+  // Main Layout Component for Protected Routes
+  const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <AppHeader />
+      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </div>
+      <AppFooter
+        onSettings={() => navigate('/settings')}
+        onInvoices={() => navigate('/invoices')}
+        onPrint={handlePrint}
+        onSave={handleSave}
+        onLogout={handleAdminLogout}
+        onToggleChangeCredentials={() => setShowChangeCredentials(v => !v)}
+        adminToken={adminToken}
+      />
+      
+      {/* AdminChangeCredentials Modal */}
+      {showChangeCredentials && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded shadow-lg p-6 relative">
+            <button
+              onClick={() => setShowChangeCredentials(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              ×
+            </button>
+            <AdminChangeCredentials token={adminToken} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   if (loading) {
     return (
@@ -128,69 +154,64 @@ function App() {
     );
   }
 
-  // Show Company Settings view
-  if (currentView === 'settings') {
-    return <SettingsPage onBack={() => setCurrentView('invoice')} />;
-  }
-
-  // Show Invoice List view
-  if (currentView === 'invoices') {
-    return <InvoicesPage onBack={() => {
-      setInvoice(prev => ({ ...prev, invoiceNumber: '' }));
-      setCurrentView('invoice');
-    }} />;
-  }
-
-  // Show Invoice view (Hauptanwendung)
   return (
     <>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <AppHeader />
-
-        <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <InvoicePage
-            invoice={invoice}
-            updateCustomerInfo={updateCustomerInfo}
-            updateInvoiceNumber={updateInvoiceNumber}
-            updateDate={updateDate}
-            updateDeliveryDate={updateDeliveryDate}
-            addItem={addItem}
-            updateItem={updateItem}
-            removeItem={removeItem}
-            calculateTotals={calculateTotals}
-            saveInvoice={saveInvoice}
-            loading={loading}
-            updatePaymentMethod={updatePaymentMethod}
-            updateGlobalDiscount={updateGlobalDiscount}
-            updateGlobalTip={updateGlobalTip}
-          />
-        </div>
-
-        <AppFooter
-          onSettings={() => setCurrentView('settings')}
-          onInvoices={() => setCurrentView('invoices')}
-          onPrint={handlePrint}
-          onSave={handleSave}
-          onLogout={handleAdminLogout}
-          onToggleChangeCredentials={() => setShowChangeCredentials(v => !v)}
-          adminToken={adminToken}
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <InvoicePage
+                  invoice={invoice}
+                  updateCustomerInfo={updateCustomerInfo}
+                  updateInvoiceNumber={updateInvoiceNumber}
+                  updateDate={updateDate}
+                  updateDeliveryDate={updateDeliveryDate}
+                  addItem={addItem}
+                  updateItem={updateItem}
+                  removeItem={removeItem}
+                  calculateTotals={calculateTotals}
+                  saveInvoice={saveInvoice}
+                  loading={loading}
+                  updatePaymentMethod={updatePaymentMethod}
+                  updateGlobalDiscount={updateGlobalDiscount}
+                  updateGlobalTip={updateGlobalTip}
+                />
+              </MainLayout>
+            </ProtectedRoute>
+          }
         />
-
-        {/* AdminChangeCredentials Modal */}
-        {showChangeCredentials && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-            <div className="bg-white rounded shadow-lg p-6 relative">
-              <button
-                onClick={() => setShowChangeCredentials(false)}
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-              <AdminChangeCredentials token={adminToken} />
-            </div>
-          </div>
-        )}
-      </div>
+        
+        <Route
+          path="/invoices"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <InvoicesPage onBack={() => {
+                  setInvoice(prev => ({ ...prev, invoiceNumber: '' }));
+                  navigate('/');
+                }} />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <SettingsPage onBack={() => navigate('/')} />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
       <ToastContainer />
     </>
   );
