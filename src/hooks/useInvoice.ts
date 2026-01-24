@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Invoice, InvoiceItem, CompanyInfo, CustomerInfo } from '../types/invoice';
 import { apiService } from '../services/api';
 import { showToast } from '../services/toast';
@@ -28,7 +28,7 @@ const defaultCustomer: CustomerInfo = {
 };
 
 export const useInvoice = (invoiceId?: string, onSaveSuccess?: () => void) => {
-  const [invoice, setInvoice] = useState<Invoice>({
+  const [invoice, setInvoice] = useState<Invoice>(() => ({
     invoiceNumber: `INV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
     date: new Date().toISOString().split('T')[0],
     company: defaultCompany,
@@ -38,7 +38,7 @@ export const useInvoice = (invoiceId?: string, onSaveSuccess?: () => void) => {
     currency: 'EUR',
     globalDiscount: 0,
     globalTip: 0
-  });
+  }));
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,28 +146,28 @@ export const useInvoice = (invoiceId?: string, onSaveSuccess?: () => void) => {
     }
   };
 
-  const updateCustomerInfo = (field: keyof CustomerInfo, value: string) => {
+  const updateCustomerInfo = useCallback((field: keyof CustomerInfo, value: string) => {
     setInvoice(prev => ({
       ...prev,
       customer: { ...prev.customer, [field]: value }
     }));
-  };
+  }, []);
 
-  const updateGlobalDiscount = (value: number) => {
+  const updateGlobalDiscount = useCallback((value: number) => {
     setInvoice(prev => ({
       ...prev,
       globalDiscount: value
     }));
-  };
+  }, []);
 
-  const updateGlobalTip = (value: number) => {
+  const updateGlobalTip = useCallback((value: number) => {
     setInvoice(prev => ({
       ...prev,
       globalTip: value
     }));
-  };
+  }, []);
 
-  const addItem = () => {
+  const addItem = useCallback(() => {
     const newItem: InvoiceItem = {
       id: crypto.randomUUID(),
       name: '',
@@ -180,32 +180,32 @@ export const useInvoice = (invoiceId?: string, onSaveSuccess?: () => void) => {
       items: [...prev.items, newItem]
     }));
     showToast.success('itemAdded');
-  };
+  }, []);
 
-  const updateItem = (id: string, field: keyof InvoiceItem, value: string | number) => {
+  const updateItem = useCallback((id: string, field: keyof InvoiceItem, value: string | number) => {
     setInvoice(prev => ({
       ...prev,
       items: prev.items.map(item => 
         item.id === id ? { ...item, [field]: value } : item
       )
     }));
-  };
+  }, []);
 
-  const removeItem = (id: string) => {
+  const removeItem = useCallback((id: string) => {
     setInvoice(prev => ({
       ...prev,
       items: prev.items.filter(item => item.id !== id)
     }));
     showToast.success('itemRemoved');
-  };
+  }, []);
 
-  const calculateItemTotal = (item: InvoiceItem) => {
+  const calculateItemTotal = useCallback((item: InvoiceItem) => {
     const subtotal = item.quantity * item.price;
     const tax1Amount = subtotal * (item.tax1 / 100);
     return subtotal + tax1Amount;
-  };
+  }, []);
 
-  const calculateTotals = () => {
+  const calculateTotals = useCallback(() => {
     // Bruttosumme aller Positionen
     const bruttoSum = invoice.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     // Steuergruppen berechnen (optional, für spätere Erweiterung)
@@ -229,7 +229,7 @@ export const useInvoice = (invoiceId?: string, onSaveSuccess?: () => void) => {
       totalTip: tip,
       total
     };
-  };
+  }, [invoice.items, invoice.globalDiscount, invoice.globalTip]);
 
   const saveInvoice = async () => {
     // Pflichtfeld: Rechnungsnummer

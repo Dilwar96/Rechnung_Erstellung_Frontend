@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useInvoice } from './hooks/useInvoice';
 import { useInvoiceActions } from './hooks/useInvoiceActions';
 import { ToastContainer } from './components/Toast';
-import { AdminChangeCredentials } from './components/AdminChangeCredentials';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { PageLayout } from './components/PageLayout';
 
-import AppHeader from './components/AppHeader';
-import AppFooter from './components/AppFooter';
 import InvoicePage from './views/InvoicePage';
 import InvoicesPage from './views/InvoicesPage';
 import SettingsPage from './views/SettingsPage';
@@ -40,79 +38,44 @@ function App() {
 
   const { handlePrint, handleSave } = useInvoiceActions(saveInvoice);
 
-
-  // Event listener to clear admin token when page is closed or refreshed
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      localStorage.removeItem('adminToken');
-    };
-
-    const handlePageHide = () => {
-      localStorage.removeItem('adminToken');
-    };
-
-    // Add event listeners
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('pagehide', handlePageHide);
-
-    // Cleanup event listeners on component unmount
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('pagehide', handlePageHide);
-    };
-  }, []);
-
-  // Update token state when localStorage changes
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const token = localStorage.getItem('adminToken');
-      setAdminToken(token);
-    };
-    
-    // Listen for custom storage event (for same tab)
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('localStorageChange', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('localStorageChange', handleStorageChange);
-    };
-  }, []);
-
-  const updateInvoiceNumber = (value: string) => {
+  const updateInvoiceNumber = useCallback((value: string) => {
     setInvoice(prev => ({
       ...prev,
       invoiceNumber: value
     }));
-  };
+  }, []);
 
-  const updateDate = (value: string) => {
+  const updateDate = useCallback((value: string) => {
     setInvoice(prev => ({
       ...prev,
       date: value
     }));
-  };
+  }, []);
 
-  const updateDeliveryDate = (value: string) => {
+  const updateDeliveryDate = useCallback((value: string) => {
     setInvoice(prev => ({
       ...prev,
       deliveryDate: value
     }));
-  };
+  }, []);
 
-  const updatePaymentMethod = (method: 'card' | 'cash') => {
+  const updatePaymentMethod = useCallback((method: 'card' | 'cash') => {
     setInvoice(prev => ({
       ...prev,
       paymentMethod: method
     }));
-  };
+  }, []);
 
   const handleAdminLogout = () => {
     localStorage.removeItem('adminToken');
     setAdminToken(null);
-    // Trigger custom event for same-tab localStorage update
-    window.dispatchEvent(new Event('localStorageChange'));
     navigate('/login');
+  };
+
+  const handleLoginSuccess = (token: string) => {
+    localStorage.setItem('adminToken', token);
+    setAdminToken(token);
+    navigate('/');
   };
 
   const handleEditInvoice = (id: string) => {
@@ -142,40 +105,6 @@ function App() {
     }));
   };
 
-  // Main Layout Component for Protected Routes
-  const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex flex-col">
-      <AppHeader />
-      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
-        {children}
-      </div>
-      <AppFooter
-        onSettings={() => navigate('/settings')}
-        onInvoices={() => navigate('/invoices')}
-        onPrint={handlePrint}
-        onSave={handleSave}
-        onLogout={handleAdminLogout}
-        onToggleChangeCredentials={() => setShowChangeCredentials(v => !v)}
-        adminToken={adminToken}
-      />
-      
-      {/* AdminChangeCredentials Modal */}
-      {showChangeCredentials && adminToken && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow-lg p-6 relative">
-            <button
-              onClick={() => setShowChangeCredentials(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-            >
-              ×
-            </button>
-            <AdminChangeCredentials token={adminToken} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -190,13 +119,23 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
         
         <Route
           path="/"
           element={
             <ProtectedRoute>
-              <MainLayout>
+              <PageLayout
+                onSettings={() => navigate('/settings')}
+                onInvoices={() => navigate('/invoices')}
+                onPrint={handlePrint}
+                onSave={handleSave}
+                onLogout={handleAdminLogout}
+                onToggleChangeCredentials={() => setShowChangeCredentials(v => !v)}
+                adminToken={adminToken}
+                showChangeCredentials={showChangeCredentials}
+                onCloseChangeCredentials={() => setShowChangeCredentials(false)}
+              >
                 <InvoicePage
                   invoice={invoice}
                   updateCustomerInfo={updateCustomerInfo}
@@ -213,7 +152,7 @@ function App() {
                   updateGlobalDiscount={updateGlobalDiscount}
                   updateGlobalTip={updateGlobalTip}
                 />
-              </MainLayout>
+              </PageLayout>
             </ProtectedRoute>
           }
         />
@@ -222,7 +161,17 @@ function App() {
           path="/invoices"
           element={
             <ProtectedRoute>
-              <MainLayout>
+              <PageLayout
+                onSettings={() => navigate('/settings')}
+                onInvoices={() => navigate('/invoices')}
+                onPrint={handlePrint}
+                onSave={handleSave}
+                onLogout={handleAdminLogout}
+                onToggleChangeCredentials={() => setShowChangeCredentials(v => !v)}
+                adminToken={adminToken}
+                showChangeCredentials={showChangeCredentials}
+                onCloseChangeCredentials={() => setShowChangeCredentials(false)}
+              >
                 <InvoicesPage 
                   onBack={() => {
                     handleNewInvoice();
@@ -230,7 +179,7 @@ function App() {
                   }} 
                   onEdit={handleEditInvoice}
                 />
-              </MainLayout>
+              </PageLayout>
             </ProtectedRoute>
           }
         />
@@ -239,9 +188,19 @@ function App() {
           path="/settings"
           element={
             <ProtectedRoute>
-              <MainLayout>
+              <PageLayout
+                onSettings={() => navigate('/settings')}
+                onInvoices={() => navigate('/invoices')}
+                onPrint={handlePrint}
+                onSave={handleSave}
+                onLogout={handleAdminLogout}
+                onToggleChangeCredentials={() => setShowChangeCredentials(v => !v)}
+                adminToken={adminToken}
+                showChangeCredentials={showChangeCredentials}
+                onCloseChangeCredentials={() => setShowChangeCredentials(false)}
+              >
                 <SettingsPage onBack={() => navigate('/')} />
-              </MainLayout>
+              </PageLayout>
             </ProtectedRoute>
           }
         />

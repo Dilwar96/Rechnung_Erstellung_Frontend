@@ -1,16 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AdminLogin } from '../components/AdminLogin';
 import { ToastContainer } from '../components/Toast';
 
-export const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
+interface LoginPageProps {
+  onLoginSuccess: (token: string) => void;
+}
 
+export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const handleLoginSuccess = (token: string, _username: string) => {
-    localStorage.setItem('adminToken', token);
-    // Trigger custom event for same-tab localStorage update
-    window.dispatchEvent(new Event('localStorageChange'));
-    navigate('/');
+    onLoginSuccess(token);
   };
 
   return (
