@@ -43,7 +43,7 @@ interface Invoice {
   deliveryDate?: string;
 }
 
-export const InvoiceList: React.FC = () => {
+export const InvoiceList: React.FC<{ onEdit: (id: string) => void }> = ({ onEdit }) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Invoice | null>(null);
@@ -286,6 +286,13 @@ export const InvoiceList: React.FC = () => {
                 Details
               </button>
               <button
+                className="flex-1 min-w-[90px] bg-yellow-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-yellow-700"
+                onClick={() => onEdit(inv._id)}
+                title="Bearbeiten"
+              >
+                Bearbeiten
+              </button>
+              <button
                 className="flex-1 min-w-[90px] bg-gray-700 text-white px-2 py-1 rounded text-xs font-medium hover:bg-gray-800"
                 onClick={() => handlePrint(inv)}
                 title="Drucken"
@@ -342,6 +349,13 @@ export const InvoiceList: React.FC = () => {
                   title="Details anzeigen"
                 >
                   <span className="material-icons text-base mr-1"></span> Details
+                </button>
+                <button
+                  className="inline-flex items-center bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 transition-colors"
+                  onClick={() => onEdit(inv._id)}
+                  title="Bearbeiten"
+                >
+                  <span className="material-icons text-base mr-1"></span> Bearbeiten
                 </button>
                 <button
                   className="inline-flex items-center bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-800 transition-colors"

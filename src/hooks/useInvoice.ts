@@ -3,32 +3,33 @@ import { Invoice, InvoiceItem, CompanyInfo, CustomerInfo } from '../types/invoic
 import { apiService } from '../services/api';
 import { showToast } from '../services/toast';
 
+// Minimale Defaults - echte Defaults kommen vom Backend
 const defaultCompany: CompanyInfo = {
-  name: 'Your Company Name',
-  address: '123 Business Street',
-  city: 'Berlin',
-  postalCode: '10115',
-  phone: '+49 30 12345678',
-  email: 'info@yourcompany.com',
-  taxNumber: 'DE123456789',
-  bankName: 'Deutsche Bank',
-  accountNumber: '1234567890',
-  iban: 'DE89370400440532013000',
-  swift: 'DEUTDEFF'
+  name: '',
+  address: '',
+  city: '',
+  postalCode: '',
+  phone: '',
+  email: '',
+  taxNumber: '',
+  bankName: '',
+  accountNumber: '',
+  iban: '',
+  swift: ''
 };
 
 const defaultCustomer: CustomerInfo = {
-  name: 'Customer Name',
-  address: '456 Customer Street',
-  city: 'Munich',
-  postalCode: '80331',
+  name: '',
+  address: '',
+  city: '',
+  postalCode: '',
   customField1: '',
   customField2: ''
 };
 
-export const useInvoice = () => {
+export const useInvoice = (invoiceId?: string, onSaveSuccess?: () => void) => {
   const [invoice, setInvoice] = useState<Invoice>({
-    invoiceNumber: `INV-${Date.now()}`,
+    invoiceNumber: `INV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
     date: new Date().toISOString().split('T')[0],
     company: defaultCompany,
     customer: defaultCustomer,
@@ -41,6 +42,8 @@ export const useInvoice = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Load company information from MongoDB
   useEffect(() => {
@@ -63,11 +66,9 @@ export const useInvoice = () => {
             ...prev,
             company: response.data as CompanyInfo
           }));
-          // Don't show toast on initial load success
         }
       } catch (error) {
         setError('Failed to load company data');
-        // Don't show toast on initial load failure
       } finally {
         setLoading(false);
       }
@@ -75,6 +76,50 @@ export const useInvoice = () => {
 
     loadCompanyData();
   }, []);
+
+  // Load invoice if invoiceId is provided (edit mode)
+  useEffect(() => {
+    const loadInvoice = async () => {
+      if (!invoiceId) return;
+
+      try {
+        setLoading(true);
+        const response = await apiService.getInvoice(invoiceId);
+        
+        if (response.error) {
+          showToast.error(response.error);
+        } else if (response.data) {
+          const loadedInvoice = response.data as any;
+          // Add IDs to items if they don't have them
+          const itemsWithIds = (loadedInvoice.items || []).map((item: any) => ({
+            ...item,
+            id: item.id || crypto.randomUUID()
+          }));
+
+          setInvoice({
+            invoiceNumber: loadedInvoice.invoiceNumber || '',
+            date: loadedInvoice.date || new Date().toISOString().split('T')[0],
+            deliveryDate: loadedInvoice.deliveryDate || undefined,
+            company: loadedInvoice.company || defaultCompany,
+            customer: loadedInvoice.customer || defaultCustomer,
+            items: itemsWithIds,
+            paymentMethod: loadedInvoice.paymentMethod || 'card',
+            currency: loadedInvoice.currency || 'EUR',
+            globalDiscount: loadedInvoice.globalDiscount || loadedInvoice.totals?.totalDiscount || 0,
+            globalTip: loadedInvoice.globalTip || loadedInvoice.totals?.totalTip || 0
+          });
+          setIsEditMode(true);
+          setEditingId(invoiceId);
+        }
+      } catch (error) {
+        showToast.error('Fehler beim Laden der Rechnung');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInvoice();
+  }, [invoiceId]);
 
   const updateCompanyInfo = async (field: keyof CompanyInfo, value: string) => {
     try {
@@ -124,7 +169,7 @@ export const useInvoice = () => {
 
   const addItem = () => {
     const newItem: InvoiceItem = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: '',
       quantity: 1,
       price: 0,
@@ -252,7 +297,14 @@ export const useInvoice = () => {
         }
       };
 
-      const response = await apiService.createInvoice(invoiceData);
+      let response;
+      
+      // If in edit mode, update instead of create
+      if (isEditMode && editingId) {
+        response = await apiService.updateInvoice(editingId, invoiceData);
+      } else {
+        response = await apiService.createInvoice(invoiceData);
+      }
       
       if (response.error) {
         // Check if it's a duplicate invoice number error
@@ -267,11 +319,11 @@ export const useInvoice = () => {
         return false;
         }
       } else {
-        showToast.success('invoiceSaved');
+        showToast.success(isEditMode ? 'Rechnung wurde aktualisiert' : 'invoiceSaved');
         
-        // Nach dem Speichern Felder zurücksetzen
+        // Reset fields and exit edit mode
         setInvoice({
-          invoiceNumber: `INV-${Date.now()}`,
+          invoiceNumber: `INV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
           date: new Date().toISOString().split('T')[0],
           company: invoice.company, // Firma bleibt gleich
           customer: {
@@ -288,6 +340,14 @@ export const useInvoice = () => {
           globalDiscount: 0,
           globalTip: 0
         });
+        setIsEditMode(false);
+        setEditingId(null);
+        
+        // Call onSaveSuccess callback if in edit mode
+        if (isEditMode && onSaveSuccess) {
+          onSaveSuccess();
+        }
+        
         return true;
       }
     } catch (error) {
@@ -310,6 +370,7 @@ export const useInvoice = () => {
     calculateTotals,
     saveInvoice,
     loading,
-    error
+    error,
+    isEditMode
   };
 };

@@ -17,7 +17,13 @@ function App() {
   const navigate = useNavigate();
   const [adminToken, setAdminToken] = useState<string | null>(localStorage.getItem('adminToken'));
   const [showChangeCredentials, setShowChangeCredentials] = useState(false);
+  const [editingInvoiceId, setEditingInvoiceId] = useState<string | undefined>(undefined);
   
+  const handleSaveSuccess = () => {
+    setEditingInvoiceId(undefined);
+    navigate('/invoices');
+  };
+
   const {
     invoice,
     setInvoice,
@@ -30,7 +36,7 @@ function App() {
     calculateTotals,
     saveInvoice,
     loading
-  } = useInvoice();
+  } = useInvoice(editingInvoiceId, handleSaveSuccess);
 
   const { handlePrint, handleSave } = useInvoiceActions(saveInvoice);
 
@@ -107,6 +113,33 @@ function App() {
     // Trigger custom event for same-tab localStorage update
     window.dispatchEvent(new Event('localStorageChange'));
     navigate('/login');
+  };
+
+  const handleEditInvoice = (id: string) => {
+    setEditingInvoiceId(id);
+    navigate('/');
+  };
+
+  const handleNewInvoice = () => {
+    setEditingInvoiceId(undefined);
+    setInvoice(prev => ({
+      invoiceNumber: `INV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      date: new Date().toISOString().split('T')[0],
+      company: prev.company,
+      customer: {
+        name: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        customField1: '',
+        customField2: ''
+      },
+      items: [],
+      paymentMethod: 'card',
+      currency: 'EUR',
+      globalDiscount: 0,
+      globalTip: 0
+    }));
   };
 
   // Main Layout Component for Protected Routes
@@ -190,10 +223,13 @@ function App() {
           element={
             <ProtectedRoute>
               <MainLayout>
-                <InvoicesPage onBack={() => {
-                  setInvoice(prev => ({ ...prev, invoiceNumber: '' }));
-                  navigate('/');
-                }} />
+                <InvoicesPage 
+                  onBack={() => {
+                    handleNewInvoice();
+                    navigate('/');
+                  }} 
+                  onEdit={handleEditInvoice}
+                />
               </MainLayout>
             </ProtectedRoute>
           }
